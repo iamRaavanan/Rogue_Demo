@@ -19,18 +19,23 @@ public:
 	ARogueCharacter();
 
 protected:
-
 	UPROPERTY(VisibleAnywhere)
 	UCameraComponent* CameraComp;
 
 	UPROPERTY(VisibleAnywhere)
 	USpringArmComponent* SpringArmComp;
 
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<AActor> ProjectileClass;
+
+protected:
 	
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 	void MoveForward (float value);
+	void MoveRight(float value);
+	void PrimaryAttack();
 
 public:	
 	// Called every frame
