@@ -36,6 +36,7 @@ protected:
 	void MoveForward (float value);
 	void MoveRight(float value);
 	void PrimaryAttack();
+	void JumpPressed();
 
 public:	
 	// Called every frame
