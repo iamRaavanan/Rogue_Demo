@@ -6,6 +6,7 @@
 #include "Camera/CameraComponent.h"
 #include "DrawDebugHelpers.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "InteractionComponent.h"
 
 // Sets default values
 ARogueCharacter::ARogueCharacter()
@@ -17,6 +18,8 @@ ARogueCharacter::ARogueCharacter()
 	SpringArmComp->SetupAttachment(RootComponent);
 	CameraComp = CreateDefaultSubobject<UCameraComponent>("CameraComp");
 	CameraComp->SetupAttachment(SpringArmComp);
+
+	InteractionComp = CreateDefaultSubobject<UInteractionComponent>("InteractionComp");
 
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	bUseControllerRotationYaw = false;
@@ -44,7 +47,7 @@ void ARogueCharacter::MoveRight(float value)
 	AddMovementInput(RightVector, value);
 }
 
-void ARogueCharacter::PrimaryAttack()
+void ARogueCharacter::PrimaryAttack_TimeElapsed()
 {
 	FVector HandLocation = GetMesh()->GetSocketLocation("Muzzle_01");
 	FTransform SpawnT = FTransform(GetControlRotation(), HandLocation);
@@ -53,9 +56,22 @@ void ARogueCharacter::PrimaryAttack()
 	GetWorld()->SpawnActor<AActor>(ProjectileClass, SpawnT, SpawnParams);
 }
 
+void ARogueCharacter::PrimaryAttack()
+{
+	PlayAnimMontage(AttackAnim);
+
+	GetWorldTimerManager().SetTimer(TimeHanlde_PrimaryAttack, this, &ARogueCharacter::PrimaryAttack_TimeElapsed, 0.2f);
+}
+
 void ARogueCharacter::JumpPressed ()
 {
 	Jump();
+}
+
+void ARogueCharacter::PrimaryInteraction()
+{
+	if(InteractionComp)
+		InteractionComp->PrimaryInteraction();
 }
 
 // Called every frame
@@ -89,5 +105,6 @@ void ARogueCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 
 	PlayerInputComponent->BindAction("PrimaryAttack", IE_Pressed, this, &ARogueCharacter::PrimaryAttack);
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ARogueCharacter::JumpPressed);
+	PlayerInputComponent->BindAction("PrimaryInteract", IE_Pressed, this, &ARogueCharacter::PrimaryInteraction);
 }
 

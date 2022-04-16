@@ -8,6 +8,8 @@
 
 class UCameraComponent;
 class USpringArmComponent;
+class UInteractionComponent;
+class UAnimMontage;
 
 UCLASS()
 class ROGUE_REPO_API ARogueCharacter : public ACharacter
@@ -25,8 +27,17 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	USpringArmComponent* SpringArmComp;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(VisibleAnywhere)
+	UInteractionComponent* InteractionComp;
+
+	UPROPERTY(EditAnywhere, Category = "Attack")
 	TSubclassOf<AActor> ProjectileClass;
+
+	UPROPERTY(EditAnywhere, Category = "Attack")
+	UAnimMontage* AttackAnim;
+
+	UPROPERTY()
+	FTimerHandle TimeHanlde_PrimaryAttack;
 
 protected:
 	
@@ -35,8 +46,10 @@ protected:
 
 	void MoveForward (float value);
 	void MoveRight(float value);
+	void PrimaryAttack_TimeElapsed();
 	void PrimaryAttack();
 	void JumpPressed();
+	void PrimaryInteraction();
 
 public:	
 	// Called every frame
