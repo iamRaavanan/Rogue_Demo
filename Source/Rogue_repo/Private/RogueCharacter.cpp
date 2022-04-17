@@ -53,6 +53,7 @@ void ARogueCharacter::PrimaryAttack_TimeElapsed()
 	FTransform SpawnT = FTransform(GetControlRotation(), HandLocation);
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	SpawnParams.Instigator = this;
 	GetWorld()->SpawnActor<AActor>(ProjectileClass, SpawnT, SpawnParams);
 }
 
