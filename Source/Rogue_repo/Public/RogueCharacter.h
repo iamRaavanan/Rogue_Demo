@@ -10,6 +10,7 @@ class UCameraComponent;
 class USpringArmComponent;
 class UInteractionComponent;
 class UAnimMontage;
+class UAttributeComponent;
 
 UCLASS()
 class ROGUE_REPO_API ARogueCharacter : public ACharacter
@@ -29,6 +30,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere)
 	UInteractionComponent* InteractionComp;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UAttributeComponent* AttributeComp;
 
 	UPROPERTY(EditAnywhere, Category = "Attack")
 	TSubclassOf<AActor> ProjectileClass;

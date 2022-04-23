@@ -5,6 +5,7 @@
 #include "Components/SphereComponent.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
+#include "AttributeComponent.h"
 
 // Sets default values
 AMagicProjectile::AMagicProjectile()
@@ -15,7 +16,7 @@ AMagicProjectile::AMagicProjectile()
 	SphereComp = CreateDefaultSubobject<USphereComponent>("SphereComp");
 	SphereComp->SetCollisionProfileName("Projectile");
 	RootComponent = SphereComp;
-
+	SphereComp->OnComponentBeginOverlap.AddDynamic(this, &AMagicProjectile::OnActorOverlap);
 	EffectComp = CreateDefaultSubobject<UParticleSystemComponent>("EffectComp");
 	EffectComp->SetupAttachment(SphereComp);
 
@@ -30,6 +31,18 @@ void AMagicProjectile::BeginPlay()
 {
 	Super::BeginPlay();
 	
+}
+
+void AMagicProjectile::OnActorOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (OtherActor)
+	{
+		UAttributeComponent* AttributeComp = Cast<UAttributeComponent>(OtherActor->GetComponentByClass(UAttributeComponent::StaticClass()));
+		if (AttributeComp)
+		{
+			AttributeComp->ApplyHealthValue(-20.0f);
+		}
+	}
 }
 
 // Called every frame

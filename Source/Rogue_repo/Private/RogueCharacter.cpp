@@ -7,6 +7,8 @@
 #include "DrawDebugHelpers.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "InteractionComponent.h"
+#include "Kismet/KismetMathLibrary.h"
+#include "AttributeComponent.h"
 
 // Sets default values
 ARogueCharacter::ARogueCharacter()
@@ -20,7 +22,7 @@ ARogueCharacter::ARogueCharacter()
 	CameraComp->SetupAttachment(SpringArmComp);
 
 	InteractionComp = CreateDefaultSubobject<UInteractionComponent>("InteractionComp");
-
+	AttributeComp = CreateDefaultSubobject<UAttributeComponent>("AttributeComp");
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	bUseControllerRotationYaw = false;
 }
@@ -49,12 +51,30 @@ void ARogueCharacter::MoveRight(float value)
 
 void ARogueCharacter::PrimaryAttack_TimeElapsed()
 {
-	FVector HandLocation = GetMesh()->GetSocketLocation("Muzzle_01");
-	FTransform SpawnT = FTransform(GetControlRotation(), HandLocation);
-	FActorSpawnParameters SpawnParams;
-	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-	SpawnParams.Instigator = this;
-	GetWorld()->SpawnActor<AActor>(ProjectileClass, SpawnT, SpawnParams);
+	if (ensure(ProjectileClass))
+	{
+		FVector HandLocation = GetMesh()->GetSocketLocation("Muzzle_01");
+		FTransform SpawnT/* = FTransform(GetControlRotation(), HandLocation)*/;
+		FHitResult Hit;
+		FVector Start, End;
+		Start = HandLocation;
+		End = Start + (GetControlRotation().Vector() * 1000);
+		FCollisionQueryParams TraceParams;
+		bool isHit = GetWorld()->LineTraceSingleByChannel(Hit, Start, End, ECC_WorldDynamic, TraceParams);
+		if (isHit)
+		{
+			FRotator TargetRot = UKismetMathLibrary::FindLookAtRotation(Start, Hit.ImpactPoint);
+			SpawnT = FTransform(TargetRot, HandLocation);
+		}
+		else
+		{
+			SpawnT = FTransform(GetControlRotation(), HandLocation);
+		}
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+		SpawnParams.Instigator = this;
+		GetWorld()->SpawnActor<AActor>(ProjectileClass, SpawnT, SpawnParams);
+	}
 }
 
 void ARogueCharacter::PrimaryAttack()
@@ -105,7 +125,7 @@ void ARogueCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
 
 	PlayerInputComponent->BindAction("PrimaryAttack", IE_Pressed, this, &ARogueCharacter::PrimaryAttack);
-	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ARogueCharacter::JumpPressed);
+	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction("PrimaryInteract", IE_Pressed, this, &ARogueCharacter::PrimaryInteraction);
 }
 
