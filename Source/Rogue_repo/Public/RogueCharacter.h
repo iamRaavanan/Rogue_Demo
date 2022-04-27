@@ -38,21 +38,38 @@ protected:
 	TSubclassOf<AActor> ProjectileClass;
 
 	UPROPERTY(EditAnywhere, Category = "Attack")
+	TSubclassOf<AActor> BlackHoleProjectileClass;
+
+	UPROPERTY(EditAnywhere, Category = "Attack")
+	TSubclassOf<AActor> DashProjectileClass;
+
+	UPROPERTY(EditAnywhere, Category = "Attack")
 	UAnimMontage* AttackAnim;
 
-	UPROPERTY()
+	UPROPERTY(EditDefaultsOnly, Category = "Attack")
+	float AttackAnimDelay;
+
 	FTimerHandle TimeHanlde_PrimaryAttack;
+	FTimerHandle TimeHanlde_BlackholeAttack;
+	FTimerHandle TimeHanlde_Dash;
 
 protected:
-	
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
 
 	void MoveForward (float value);
 	void MoveRight(float value);
+
 	void PrimaryAttack_TimeElapsed();
 	void PrimaryAttack();
-	void JumpPressed();
+
+	void BlackHoleAttack();
+	void BlackholeAttack_TimeElapsed();
+
+	void Dash();
+	void Dash_TimeElapsed();
+
+	// Re-use spawn logic between attacks
+	void SpawnProjectile(TSubclassOf<AActor> ClassToSpawn);
+
 	void PrimaryInteraction();
 
 public:	

@@ -25,13 +25,7 @@ ARogueCharacter::ARogueCharacter()
 	AttributeComp = CreateDefaultSubobject<UAttributeComponent>("AttributeComp");
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	bUseControllerRotationYaw = false;
-}
-
-// Called when the game starts or when spawned
-void ARogueCharacter::BeginPlay()
-{
-	Super::BeginPlay();
-	
+	AttackAnimDelay = 0.2f;
 }
 
 void ARogueCharacter::MoveForward(float value)
@@ -51,42 +45,76 @@ void ARogueCharacter::MoveRight(float value)
 
 void ARogueCharacter::PrimaryAttack_TimeElapsed()
 {
-	if (ensure(ProjectileClass))
-	{
-		FVector HandLocation = GetMesh()->GetSocketLocation("Muzzle_01");
-		FTransform SpawnT/* = FTransform(GetControlRotation(), HandLocation)*/;
-		FHitResult Hit;
-		FVector Start, End;
-		Start = HandLocation;
-		End = Start + (GetControlRotation().Vector() * 1000);
-		FCollisionQueryParams TraceParams;
-		bool isHit = GetWorld()->LineTraceSingleByChannel(Hit, Start, End, ECC_WorldDynamic, TraceParams);
-		if (isHit)
-		{
-			FRotator TargetRot = UKismetMathLibrary::FindLookAtRotation(Start, Hit.ImpactPoint);
-			SpawnT = FTransform(TargetRot, HandLocation);
-		}
-		else
-		{
-			SpawnT = FTransform(GetControlRotation(), HandLocation);
-		}
-		FActorSpawnParameters SpawnParams;
-		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-		SpawnParams.Instigator = this;
-		GetWorld()->SpawnActor<AActor>(ProjectileClass, SpawnT, SpawnParams);
-	}
+	SpawnProjectile(ProjectileClass);
 }
 
 void ARogueCharacter::PrimaryAttack()
 {
 	PlayAnimMontage(AttackAnim);
 
-	GetWorldTimerManager().SetTimer(TimeHanlde_PrimaryAttack, this, &ARogueCharacter::PrimaryAttack_TimeElapsed, 0.2f);
+	GetWorldTimerManager().SetTimer(TimeHanlde_PrimaryAttack, this, &ARogueCharacter::PrimaryAttack_TimeElapsed, AttackAnimDelay);
 }
 
-void ARogueCharacter::JumpPressed ()
+void ARogueCharacter::BlackHoleAttack()
 {
-	Jump();
+	PlayAnimMontage(AttackAnim);
+	GetWorldTimerManager().SetTimer(TimeHanlde_BlackholeAttack, this, &ARogueCharacter::BlackholeAttack_TimeElapsed, AttackAnimDelay);
+}
+
+void ARogueCharacter::BlackholeAttack_TimeElapsed()
+{
+	SpawnProjectile(BlackHoleProjectileClass);
+}
+
+void ARogueCharacter::Dash()
+{
+	PlayAnimMontage(AttackAnim);
+	GetWorldTimerManager().SetTimer(TimeHanlde_Dash, this, &ARogueCharacter::Dash_TimeElapsed, AttackAnimDelay);
+}
+
+void ARogueCharacter::Dash_TimeElapsed()
+{
+	SpawnProjectile(DashProjectileClass);
+}
+
+void ARogueCharacter::SpawnProjectile(TSubclassOf<AActor> ClassToSpawn)
+{
+	if (ensure(ProjectileClass))
+	{
+		FVector HandLocation = GetMesh()->GetSocketLocation("Muzzle_01");
+
+		FHitResult Hit;
+		FVector TraceStart = CameraComp->GetComponentLocation();
+		FVector TraceEnd = TraceStart + (GetControlRotation().Vector() * 5000);
+
+		FCollisionShape Shape;
+		Shape.SetSphere(20.0f);
+
+		FCollisionQueryParams TraceParams;
+		TraceParams.AddIgnoredActor(this);
+
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+		SpawnParams.Instigator = this;
+
+		FCollisionObjectQueryParams ObjParams;
+		ObjParams.AddObjectTypesToQuery(ECC_WorldDynamic);
+		ObjParams.AddObjectTypesToQuery(ECC_WorldStatic);
+		ObjParams.AddObjectTypesToQuery(ECC_Pawn);
+		
+		FRotator ProjRotation;
+
+		if (GetWorld()->SweepSingleByObjectType(Hit, TraceStart, TraceEnd, FQuat::Identity, ObjParams, Shape, TraceParams))
+		{
+			ProjRotation = FRotationMatrix::MakeFromX(Hit.ImpactPoint - HandLocation).Rotator();
+		}
+		else
+		{
+			ProjRotation = FRotationMatrix::MakeFromX(TraceEnd - HandLocation).Rotator();
+		}
+		FTransform SpawnT = FTransform(ProjRotation, HandLocation);
+		GetWorld()->SpawnActor<AActor>(ClassToSpawn, SpawnT, SpawnParams);
+	}
 }
 
 void ARogueCharacter::PrimaryInteraction()
@@ -125,6 +153,10 @@ void ARogueCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
 
 	PlayerInputComponent->BindAction("PrimaryAttack", IE_Pressed, this, &ARogueCharacter::PrimaryAttack);
+	// Used generic name 'SecondaryAttack' for binding 
+	PlayerInputComponent->BindAction("SecondaryAttack", IE_Pressed, this, &ARogueCharacter::BlackHoleAttack);
+	PlayerInputComponent->BindAction("Dash", IE_Pressed, this, &ARogueCharacter::Dash);
+
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction("PrimaryInteract", IE_Pressed, this, &ARogueCharacter::PrimaryInteraction);
 }
