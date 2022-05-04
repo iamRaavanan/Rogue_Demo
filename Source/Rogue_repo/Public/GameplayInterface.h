@@ -6,7 +6,7 @@
 #include "UObject/Interface.h"
 #include "GameplayInterface.generated.h"
 
-// This class does not need to be modified.
+// This class does not need to be modified.5
 UINTERFACE(MinimalAPI)
 class UGameplayInterface : public UInterface
 {

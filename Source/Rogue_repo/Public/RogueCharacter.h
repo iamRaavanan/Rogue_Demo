@@ -11,6 +11,7 @@ class USpringArmComponent;
 class UInteractionComponent;
 class UAnimMontage;
 class UAttributeComponent;
+class UParticleSystem;
 
 UCLASS()
 class ROGUE_REPO_API ARogueCharacter : public ACharacter
@@ -34,8 +35,18 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UAttributeComponent* AttributeComp;
 
+	UPROPERTY(VisibleAnywhere, Category = "Effects")
+	FName HandSocketName;
+
+	UPROPERTY(VisibleAnywhere, Category = "Effects")
+	FName TimeToHitParamName;
+
 	UPROPERTY(EditAnywhere, Category = "Attack")
 	TSubclassOf<AActor> ProjectileClass;
+
+	/* Particle System played during attack animation */
+	UPROPERTY(EditAnywhere, Category = "Attack")
+	UParticleSystem* CastingEffect;
 
 	UPROPERTY(EditAnywhere, Category = "Attack")
 	TSubclassOf<AActor> BlackHoleProjectileClass;
@@ -71,6 +82,13 @@ protected:
 	void SpawnProjectile(TSubclassOf<AActor> ClassToSpawn);
 
 	void PrimaryInteraction();
+
+	void StartAttackEffects();
+
+	UFUNCTION()
+	void OnHealthChanged (AActor* InstigatorActor, UAttributeComponent* OwingComp, float NewHealth, float Delta);
+
+	virtual void PostInitializeComponents() override;
 
 public:	
 	// Called every frame

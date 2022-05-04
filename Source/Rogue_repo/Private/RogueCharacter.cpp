@@ -9,6 +9,7 @@
 #include "InteractionComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "AttributeComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 ARogueCharacter::ARogueCharacter()
@@ -26,6 +27,8 @@ ARogueCharacter::ARogueCharacter()
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	bUseControllerRotationYaw = false;
 	AttackAnimDelay = 0.2f;
+	TimeToHitParamName = "TimeToHit";
+	HandSocketName = "Muzzle_01";
 }
 
 void ARogueCharacter::MoveForward(float value)
@@ -50,14 +53,15 @@ void ARogueCharacter::PrimaryAttack_TimeElapsed()
 
 void ARogueCharacter::PrimaryAttack()
 {
-	PlayAnimMontage(AttackAnim);
-
+	//PlayAnimMontage(AttackAnim);
+	StartAttackEffects();
 	GetWorldTimerManager().SetTimer(TimeHanlde_PrimaryAttack, this, &ARogueCharacter::PrimaryAttack_TimeElapsed, AttackAnimDelay);
 }
 
 void ARogueCharacter::BlackHoleAttack()
 {
-	PlayAnimMontage(AttackAnim);
+	//PlayAnimMontage(AttackAnim);
+	StartAttackEffects();
 	GetWorldTimerManager().SetTimer(TimeHanlde_BlackholeAttack, this, &ARogueCharacter::BlackholeAttack_TimeElapsed, AttackAnimDelay);
 }
 
@@ -68,7 +72,8 @@ void ARogueCharacter::BlackholeAttack_TimeElapsed()
 
 void ARogueCharacter::Dash()
 {
-	PlayAnimMontage(AttackAnim);
+	//PlayAnimMontage(AttackAnim);
+	StartAttackEffects();
 	GetWorldTimerManager().SetTimer(TimeHanlde_Dash, this, &ARogueCharacter::Dash_TimeElapsed, AttackAnimDelay);
 }
 
@@ -79,9 +84,9 @@ void ARogueCharacter::Dash_TimeElapsed()
 
 void ARogueCharacter::SpawnProjectile(TSubclassOf<AActor> ClassToSpawn)
 {
-	if (ensure(ProjectileClass))
+	if (ensure(ClassToSpawn))
 	{
-		FVector HandLocation = GetMesh()->GetSocketLocation("Muzzle_01");
+		FVector HandLocation = GetMesh()->GetSocketLocation(HandSocketName);
 
 		FHitResult Hit;
 		FVector TraceStart = CameraComp->GetComponentLocation();
@@ -102,16 +107,11 @@ void ARogueCharacter::SpawnProjectile(TSubclassOf<AActor> ClassToSpawn)
 		ObjParams.AddObjectTypesToQuery(ECC_WorldStatic);
 		ObjParams.AddObjectTypesToQuery(ECC_Pawn);
 		
-		FRotator ProjRotation;
-
 		if (GetWorld()->SweepSingleByObjectType(Hit, TraceStart, TraceEnd, FQuat::Identity, ObjParams, Shape, TraceParams))
 		{
-			ProjRotation = FRotationMatrix::MakeFromX(Hit.ImpactPoint - HandLocation).Rotator();
+			TraceEnd = Hit.ImpactPoint;
 		}
-		else
-		{
-			ProjRotation = FRotationMatrix::MakeFromX(TraceEnd - HandLocation).Rotator();
-		}
+		FRotator ProjRotation = FRotationMatrix::MakeFromX(TraceEnd - HandLocation).Rotator();
 		FTransform SpawnT = FTransform(ProjRotation, HandLocation);
 		GetWorld()->SpawnActor<AActor>(ClassToSpawn, SpawnT, SpawnParams);
 	}
@@ -121,6 +121,31 @@ void ARogueCharacter::PrimaryInteraction()
 {
 	if(InteractionComp)
 		InteractionComp->PrimaryInteraction();
+}
+
+void ARogueCharacter::StartAttackEffects()
+{
+	PlayAnimMontage(AttackAnim);
+	UGameplayStatics::SpawnEmitterAttached(CastingEffect, GetMesh(), HandSocketName, FVector::ZeroVector, FRotator::ZeroRotator, EAttachLocation::SnapToTarget);
+}
+
+void ARogueCharacter::OnHealthChanged(AActor* InstigatorActor, UAttributeComponent* OwingComp, float NewHealth, float Delta)
+{
+	if (Delta < 0.0f)
+	{
+		//GetMesh()->execSetScalarParameterValueOnMaterials(TimeToHitParamName, GetWorld()->TimeSeconds);
+	}
+	if (NewHealth <= 0.0f && Delta < 0.0f)
+	{
+		APlayerController* PC = Cast<APlayerController>(GetController());
+		DisableInput(PC);
+	}
+}
+
+void ARogueCharacter::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+	AttributeComp->OnUpdateHealth.AddDynamic(this, &ARogueCharacter::OnHealthChanged);
 }
 
 // Called every frame
