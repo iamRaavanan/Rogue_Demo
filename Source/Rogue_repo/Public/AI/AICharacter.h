@@ -7,6 +7,9 @@
 #include "AICharacter.generated.h"
 
 class UPawnSensingComponent;
+class UAttributeComponent;
+class UUserWidget;
+class UWorldUserWidget;
 
 UCLASS()
 class ROGUE_REPO_API AAICharacter : public ACharacter
@@ -23,10 +26,23 @@ protected:
 	UFUNCTION()
 	void OnPawnSeen (APawn* Pawn);
 	
+	UFUNCTION()
+	void OnHealthChanged(AActor* InstigatorActor, UAttributeComponent* OwingComp, float NewHealth, float Delta);
+
+	UFUNCTION()
+	void SetTargetActor (AActor* NewTarget);
+
 protected:
+
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UUserWidget> HealthBarWidgetClass;
 
 	UPROPERTY(VisibleAnywhere, Category = "Components")
 	UPawnSensingComponent* PawnSensingComp;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UAttributeComponent* AttributeComp;
 
+	UPROPERTY()
+	UWorldUserWidget* ActiveHealthBar;
 };

@@ -4,6 +4,7 @@
 #include "MagicProjectile.h"
 #include "AttributeComponent.h"
 #include "Components/SphereComponent.h"
+#include "GameplayFunctionLibrary.h"
 
 // Sets default values
 AMagicProjectile::AMagicProjectile()
@@ -24,11 +25,15 @@ void AMagicProjectile::OnActorOverlap(UPrimitiveComponent* OverlappedComponent, 
 {
 	if (OtherActor && OtherActor != GetInstigator())
 	{
-		UAttributeComponent* AttributeComp = Cast<UAttributeComponent>(OtherActor->GetComponentByClass(UAttributeComponent::StaticClass()));
-		if (AttributeComp)
+		//UAttributeComponent* AttributeComp = Cast<UAttributeComponent>(OtherActor->GetComponentByClass(UAttributeComponent::StaticClass()));
+		//if (AttributeComp)
+		//{
+		//	AttributeComp->ApplyHealthValue(GetInstigator(), -DamageAmount);	//reduce the damage amount
+		//	// Only explode when we hit something
+		//	Explode();
+		//}
+		if (UGameplayFunctionLibrary::ApplyDirectionalDamage(GetInstigator(), OtherActor, DamageAmount, SweepResult))
 		{
-			AttributeComp->ApplyHealthValue(-DamageAmount);	//reduce the damage amount
-			// Only explode when we hit something
 			Explode();
 		}
 	}

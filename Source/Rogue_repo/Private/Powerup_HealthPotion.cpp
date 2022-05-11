@@ -21,7 +21,7 @@ void APowerup_HealthPotion::Interact_Implementation(APawn* InstigatorPawn)
 	UAttributeComponent* AttributeComp = Cast<UAttributeComponent>(InstigatorPawn->GetComponentByClass(UAttributeComponent::StaticClass()));
 	if (ensure(AttributeComp) && !AttributeComp->IsFullHealth())
 	{
-		if (AttributeComp->ApplyHealthValue(AttributeComp->GetHealthMax()))
+		if (AttributeComp->ApplyHealthValue(this, AttributeComp->GetHealthMax()))
 		{
 			HideAndCooldownPowerup();
 		}

@@ -5,6 +5,7 @@
 #include "GameplayInterface.h"
 #include "DrawDebugHelpers.h"
 
+static TAutoConsoleVariable<bool> CVarDebugDrawInteraction (TEXT("rr.InteractionDebugDraw"), false, TEXT("Enable debug lines for interaction component"), ECVF_Cheat);
 // Sets default values for this component's properties
 UInteractionComponent::UInteractionComponent()
 {
@@ -57,7 +58,9 @@ void UInteractionComponent::PrimaryInteraction()
 			IGameplayInterface::Execute_Interact(HitActor, MyPawn);
 		}
 	}
-
-	DrawDebugLine(GetWorld(), EyeLocation, End, (HitActor) ? FColor::Green : FColor::Red, false, 2.0f, 0.0f, 2.0f);
+	if (CVarDebugDrawInteraction.GetValueOnGameThread())
+	{
+		DrawDebugLine(GetWorld(), EyeLocation, End, (HitActor) ? FColor::Green : FColor::Red, false, 2.0f, 0.0f, 2.0f);
+	}
 }
 

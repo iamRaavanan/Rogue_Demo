@@ -148,22 +148,32 @@ void ARogueCharacter::PostInitializeComponents()
 	AttributeComp->OnUpdateHealth.AddDynamic(this, &ARogueCharacter::OnHealthChanged);
 }
 
-// Called every frame
-void ARogueCharacter::Tick(float DeltaTime)
+FVector ARogueCharacter::GetPawnViewLocation() const
 {
-	Super::Tick(DeltaTime);
+	return CameraComp->GetComponentLocation();
+}
 
-	const float DrawScale = 100.0f;
-	const float Thickness = 5.0f;
+// Called every frame
+//void ARogueCharacter::Tick(float DeltaTime)
+//{
+//	Super::Tick(DeltaTime);
+//
+//	const float DrawScale = 100.0f;
+//	const float Thickness = 5.0f;
+//
+//	FVector LineStart = GetActorLocation ();
+//	LineStart += GetActorRightVector() * 100;
+//	FVector ActorDirectionLineEnd = LineStart + (GetActorForwardVector() * 100.0f);
+//
+//	DrawDebugDirectionalArrow(GetWorld(), LineStart, ActorDirectionLineEnd, DrawScale, FColor::Yellow, false, 0.0f, 0, Thickness);
+//
+//	FVector ControllerDirectionLineEnd = LineStart + (GetControlRotation().Vector() * 100.0f);
+//	DrawDebugDirectionalArrow(GetWorld(), LineStart, ControllerDirectionLineEnd, DrawScale, FColor::Green, false, 0.0f, 0, Thickness);
+//}
 
-	FVector LineStart = GetActorLocation ();
-	LineStart += GetActorRightVector() * 100;
-	FVector ActorDirectionLineEnd = LineStart + (GetActorForwardVector() * 100.0f);
-
-	DrawDebugDirectionalArrow(GetWorld(), LineStart, ActorDirectionLineEnd, DrawScale, FColor::Yellow, false, 0.0f, 0, Thickness);
-
-	FVector ControllerDirectionLineEnd = LineStart + (GetControlRotation().Vector() * 100.0f);
-	DrawDebugDirectionalArrow(GetWorld(), LineStart, ControllerDirectionLineEnd, DrawScale, FColor::Green, false, 0.0f, 0, Thickness);
+void ARogueCharacter::HealSelf(float Amount /*= 100*/)
+{
+	AttributeComp->ApplyHealthValue(this, Amount);
 }
 
 // Called to bind functionality to input
