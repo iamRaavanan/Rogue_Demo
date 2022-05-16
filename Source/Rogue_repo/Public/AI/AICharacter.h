@@ -10,6 +10,7 @@ class UPawnSensingComponent;
 class UAttributeComponent;
 class UUserWidget;
 class UWorldUserWidget;
+class UActionComponent;
 
 UCLASS()
 class ROGUE_REPO_API AAICharacter : public ACharacter
@@ -42,6 +43,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UAttributeComponent* AttributeComp;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UActionComponent* ActionComp;
 
 	UPROPERTY()
 	UWorldUserWidget* ActiveHealthBar;

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "ProjectileBase.h"
+#include "GameplayTagContainer.h"
 #include "MagicProjectile.generated.h"
 
 UCLASS()
@@ -19,6 +20,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Damage")
 	float DamageAmount;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Damage")
+	FGameplayTag ParryTag;
 
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

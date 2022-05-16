@@ -5,6 +5,8 @@
 #include "AttributeComponent.h"
 #include "Components/SphereComponent.h"
 #include "GameplayFunctionLibrary.h"
+#include "ActionComponent.h"
+#include "GameFramework/ProjectileMovementComponent.h"
 
 // Sets default values
 AMagicProjectile::AMagicProjectile()
@@ -32,6 +34,14 @@ void AMagicProjectile::OnActorOverlap(UPrimitiveComponent* OverlappedComponent, 
 		//	// Only explode when we hit something
 		//	Explode();
 		//}
+		//static FGameplayTag Tag = FGameplayTag::RequestGameplayTag("Status.Parrying");
+		UActionComponent* ActionComp = Cast<UActionComponent>(OtherActor->GetComponentByClass(UActionComponent::StaticClass()));
+		if (ActionComp && ActionComp->ActiveGameplayTags.HasTag(ParryTag))
+		{
+			MoveComp->Velocity = -MoveComp->Velocity;
+			SetInstigator(Cast<APawn>(OtherActor));
+			return;
+		}
 		if (UGameplayFunctionLibrary::ApplyDirectionalDamage(GetInstigator(), OtherActor, DamageAmount, SweepResult))
 		{
 			Explode();

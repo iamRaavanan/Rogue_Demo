@@ -10,12 +10,14 @@
 #include "UI/WorldUserWidget.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "ActionComponent.h"
 
 // Sets default values
 AAICharacter::AAICharacter()
 {
 	PawnSensingComp = CreateDefaultSubobject<UPawnSensingComponent>("PawnSensingComp");
 	AttributeComp = CreateDefaultSubobject<UAttributeComponent>("AttributeComp");
+	ActionComp = CreateDefaultSubobject<UActionComponent>("ActionComp");
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 
 	// @Fixme Need to create a new profile for projectile to remove below lines
