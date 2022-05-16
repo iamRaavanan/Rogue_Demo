@@ -12,6 +12,7 @@ class UInteractionComponent;
 class UAnimMontage;
 class UAttributeComponent;
 class UParticleSystem;
+class UActionComponent;
 
 UCLASS()
 class ROGUE_REPO_API ARogueCharacter : public ACharacter
@@ -32,65 +33,34 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	UInteractionComponent* InteractionComp;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UAttributeComponent* AttributeComp;
 
-	UPROPERTY(VisibleAnywhere, Category = "Effects")
-	FName HandSocketName;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UActionComponent* ActionComp;
 
 	UPROPERTY(VisibleAnywhere, Category = "Effects")
 	FName TimeToHitParamName;
-
-	UPROPERTY(EditAnywhere, Category = "Attack")
-	TSubclassOf<AActor> ProjectileClass;
-
-	/* Particle System played during attack animation */
-	UPROPERTY(EditAnywhere, Category = "Attack")
-	UParticleSystem* CastingEffect;
-
-	UPROPERTY(EditAnywhere, Category = "Attack")
-	TSubclassOf<AActor> BlackHoleProjectileClass;
-
-	UPROPERTY(EditAnywhere, Category = "Attack")
-	TSubclassOf<AActor> DashProjectileClass;
-
-	UPROPERTY(EditAnywhere, Category = "Attack")
-	UAnimMontage* AttackAnim;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Attack")
-	float AttackAnimDelay;
-
-	FTimerHandle TimeHanlde_PrimaryAttack;
-	FTimerHandle TimeHanlde_BlackholeAttack;
-	FTimerHandle TimeHanlde_Dash;
 
 protected:
 
 	void MoveForward (float value);
 	void MoveRight(float value);
 
-	void PrimaryAttack_TimeElapsed();
+	void SprintStart ();
+	void SprintStop ();
+
 	void PrimaryAttack();
-
 	void BlackHoleAttack();
-	void BlackholeAttack_TimeElapsed();
-
 	void Dash();
-	void Dash_TimeElapsed();
-
-	// Re-use spawn logic between attacks
-	void SpawnProjectile(TSubclassOf<AActor> ClassToSpawn);
 
 	void PrimaryInteraction();
-
-	void StartAttackEffects();
 
 	UFUNCTION()
 	void OnHealthChanged (AActor* InstigatorActor, UAttributeComponent* OwingComp, float NewHealth, float Delta);
 
 	virtual void PostInitializeComponents() override;
 
-	virtual FVector GetPawnViewLocation() const override;
 
 public:	
 	// Called every frame
@@ -102,4 +72,5 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	virtual FVector GetPawnViewLocation() const override;
 };

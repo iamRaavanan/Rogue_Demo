@@ -10,6 +10,7 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "AttributeComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "ActionComponent.h"
 
 // Sets default values
 ARogueCharacter::ARogueCharacter()
@@ -24,11 +25,10 @@ ARogueCharacter::ARogueCharacter()
 
 	InteractionComp = CreateDefaultSubobject<UInteractionComponent>("InteractionComp");
 	AttributeComp = CreateDefaultSubobject<UAttributeComponent>("AttributeComp");
+	ActionComp = CreateDefaultSubobject<UActionComponent>("ActionComp");
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	bUseControllerRotationYaw = false;
-	AttackAnimDelay = 0.2f;
 	TimeToHitParamName = "TimeToHit";
-	HandSocketName = "Muzzle_01";
 }
 
 void ARogueCharacter::MoveForward(float value)
@@ -46,87 +46,35 @@ void ARogueCharacter::MoveRight(float value)
 	AddMovementInput(RightVector, value);
 }
 
-void ARogueCharacter::PrimaryAttack_TimeElapsed()
+void ARogueCharacter::SprintStart()
 {
-	SpawnProjectile(ProjectileClass);
+	ActionComp->StartActionByName(this, "Sprint");
+}
+
+void ARogueCharacter::SprintStop()
+{
+	ActionComp->StopActionByName(this, "Sprint");
 }
 
 void ARogueCharacter::PrimaryAttack()
 {
-	//PlayAnimMontage(AttackAnim);
-	StartAttackEffects();
-	GetWorldTimerManager().SetTimer(TimeHanlde_PrimaryAttack, this, &ARogueCharacter::PrimaryAttack_TimeElapsed, AttackAnimDelay);
+	ActionComp->StartActionByName(this, "PrimaryAttack");
 }
 
 void ARogueCharacter::BlackHoleAttack()
 {
-	//PlayAnimMontage(AttackAnim);
-	StartAttackEffects();
-	GetWorldTimerManager().SetTimer(TimeHanlde_BlackholeAttack, this, &ARogueCharacter::BlackholeAttack_TimeElapsed, AttackAnimDelay);
-}
-
-void ARogueCharacter::BlackholeAttack_TimeElapsed()
-{
-	SpawnProjectile(BlackHoleProjectileClass);
+	ActionComp->StartActionByName(this, "Blackhole");
 }
 
 void ARogueCharacter::Dash()
 {
-	//PlayAnimMontage(AttackAnim);
-	StartAttackEffects();
-	GetWorldTimerManager().SetTimer(TimeHanlde_Dash, this, &ARogueCharacter::Dash_TimeElapsed, AttackAnimDelay);
-}
-
-void ARogueCharacter::Dash_TimeElapsed()
-{
-	SpawnProjectile(DashProjectileClass);
-}
-
-void ARogueCharacter::SpawnProjectile(TSubclassOf<AActor> ClassToSpawn)
-{
-	if (ensure(ClassToSpawn))
-	{
-		FVector HandLocation = GetMesh()->GetSocketLocation(HandSocketName);
-
-		FHitResult Hit;
-		FVector TraceStart = CameraComp->GetComponentLocation();
-		FVector TraceEnd = TraceStart + (GetControlRotation().Vector() * 5000);
-
-		FCollisionShape Shape;
-		Shape.SetSphere(20.0f);
-
-		FCollisionQueryParams TraceParams;
-		TraceParams.AddIgnoredActor(this);
-
-		FActorSpawnParameters SpawnParams;
-		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-		SpawnParams.Instigator = this;
-
-		FCollisionObjectQueryParams ObjParams;
-		ObjParams.AddObjectTypesToQuery(ECC_WorldDynamic);
-		ObjParams.AddObjectTypesToQuery(ECC_WorldStatic);
-		ObjParams.AddObjectTypesToQuery(ECC_Pawn);
-		
-		if (GetWorld()->SweepSingleByObjectType(Hit, TraceStart, TraceEnd, FQuat::Identity, ObjParams, Shape, TraceParams))
-		{
-			TraceEnd = Hit.ImpactPoint;
-		}
-		FRotator ProjRotation = FRotationMatrix::MakeFromX(TraceEnd - HandLocation).Rotator();
-		FTransform SpawnT = FTransform(ProjRotation, HandLocation);
-		GetWorld()->SpawnActor<AActor>(ClassToSpawn, SpawnT, SpawnParams);
-	}
+	ActionComp->StartActionByName(this, "Dash");
 }
 
 void ARogueCharacter::PrimaryInteraction()
 {
 	if(InteractionComp)
 		InteractionComp->PrimaryInteraction();
-}
-
-void ARogueCharacter::StartAttackEffects()
-{
-	PlayAnimMontage(AttackAnim);
-	UGameplayStatics::SpawnEmitterAttached(CastingEffect, GetMesh(), HandSocketName, FVector::ZeroVector, FRotator::ZeroRotator, EAttachLocation::SnapToTarget);
 }
 
 void ARogueCharacter::OnHealthChanged(AActor* InstigatorActor, UAttributeComponent* OwingComp, float NewHealth, float Delta)
@@ -194,5 +142,8 @@ void ARogueCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction("PrimaryInteract", IE_Pressed, this, &ARogueCharacter::PrimaryInteraction);
+
+	PlayerInputComponent->BindAction("Sprint", IE_Pressed, this, &ARogueCharacter::SprintStart);
+	PlayerInputComponent->BindAction("Sprint", IE_Released, this, &ARogueCharacter::SprintStop);
 }
 
