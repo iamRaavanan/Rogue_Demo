@@ -16,7 +16,7 @@ class ROGUE_REPO_API UWorldUserWidget : public UUserWidget
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(BlueprintReadOnly, Category = "UI")
+	UPROPERTY(BlueprintReadWrite, Category = "UI", meta=(ExposeOnSpawn=true))
 	AActor* AttachedActor;
 
 protected:

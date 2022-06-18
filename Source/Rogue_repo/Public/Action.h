@@ -19,7 +19,8 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Action")
 	FName ActionName;
 	
-
+	UPROPERTY(EditDefaultsOnly, Category = "Action")
+	bool bAutoStart;
 public:
 
 	UFUNCTION(BlueprintCallable, Category = "Action")

@@ -15,7 +15,9 @@ class ROGUE_REPO_API UGameplayFunctionLibrary : public UBlueprintFunctionLibrary
 	GENERATED_BODY()
 
 public:
+	UFUNCTION(BlueprintCallable, Category = "Rogue-Gameplay")
 	static bool ApplyDamage(AActor* DamageCauser, AActor* TargetActor, float DamageAmt);
 
+	UFUNCTION(BlueprintCallable, Category = "Rogue-Gameplay")
 	static bool ApplyDirectionalDamage(AActor* DamageCauser, AActor* TargetActor, float DamageAmt, const FHitResult& HitResult);
 };

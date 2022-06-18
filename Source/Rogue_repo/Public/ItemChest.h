@@ -26,6 +26,9 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	UStaticMeshComponent* BaseMesh;
 
+	UPROPERTY(ReplicatedUsing="OnRep_LidOpened", BlueprintReadOnly)
+	bool bLidOpened;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UStaticMeshComponent* LidMesh;
 	// Called when the game starts or when spawned
@@ -37,4 +40,6 @@ public:
 
 	void Interact_Implementation(APawn* InstigatorPawn);
 
+	UFUNCTION()
+	void OnRep_LidOpened();
 };

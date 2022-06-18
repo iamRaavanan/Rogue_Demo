@@ -29,7 +29,7 @@ void AAICharacter::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
 	PawnSensingComp->OnSeePawn.AddDynamic(this, &AAICharacter::OnPawnSeen);
-	AttributeComp->OnUpdateHealth.AddDynamic(this, &AAICharacter::OnHealthChanged);
+	AttributeComp->OnHealthChanged.AddDynamic(this, &AAICharacter::OnHealthChanged);
 }
 
 
@@ -42,10 +42,29 @@ void AAICharacter::SetTargetActor(AActor* NewTarget)
 	}
 }
 
+AActor* AAICharacter::GetTargetActor() const
+{
+	AAIController* AIC = Cast<AAIController>(GetController());
+	if (AIC)
+	{
+		return Cast<AActor>(AIC->GetBlackboardComponent()->GetValueAsObject(TargetActorKey));
+	}
+	return nullptr;
+}
+
 void AAICharacter::OnPawnSeen(APawn* Pawn)
 {	
-	SetTargetActor(Pawn);
-	DrawDebugString(GetWorld(), GetActorLocation(), "PLAYER SPOTTED", nullptr, FColor::White, 4.0f, true);
+	if (GetTargetActor() != Pawn)
+	{
+		SetTargetActor(Pawn);
+		UWorldUserWidget* NewWidget = CreateWidget<UWorldUserWidget>(GetWorld(), SpottedWidgetClass);
+		if (NewWidget)
+		{
+			NewWidget->AttachedActor = this;
+			NewWidget->AddToViewport(10);
+		}
+	}
+	//DrawDebugString(GetWorld(), GetActorLocation(), "PLAYER SPOTTED", nullptr, FColor::White, 4.0f, true);
 }
 
 void AAICharacter::OnHealthChanged(AActor* InstigatorActor, UAttributeComponent* OwingComp, float NewHealth, float Delta)

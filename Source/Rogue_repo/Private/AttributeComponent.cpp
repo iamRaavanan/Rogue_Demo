@@ -3,16 +3,22 @@
 
 #include "AttributeComponent.h"
 #include "RogueGameModeBase.h"
+#include "Net/UnrealNetwork.h"
 
 static TAutoConsoleVariable<float> CVarDamageMultiplier(TEXT("rr.DamageMultiplier"), 1.0f, TEXT("Global damage modifier for Attribute component"), ECVF_Cheat);
 
 // Sets default values for this component's properties
 UAttributeComponent::UAttributeComponent()
 {
-	Health = 100;
 	HealthMax = 100;
 	Health = HealthMax;
+
+	Rage = 0;
+	RageMax = 100;
+
+	SetIsReplicatedByDefault(true);
 }
+
 
 bool UAttributeComponent::Kill(AActor* InstigatorActor)
 {
@@ -39,8 +45,11 @@ bool UAttributeComponent::ApplyHealthValue(AActor* InstigatorActor, float Delta)
 	Health = FMath::Clamp(Health + Delta, 0.0f, HealthMax);
 
 	float ActualDelta = Health - oldHealth;
-	OnUpdateHealth.Broadcast(InstigatorActor, this, Health, ActualDelta);
-
+	//OnHealthChanged.Broadcast(InstigatorActor, this, Health, ActualDelta);
+	if (ActualDelta != 0)
+	{
+		MulticastHelathChanged(InstigatorActor, Health, ActualDelta);
+	}
 	//Died
 	if (ActualDelta < 0.0f && Health == 0.0f)
 	{
@@ -51,6 +60,11 @@ bool UAttributeComponent::ApplyHealthValue(AActor* InstigatorActor, float Delta)
 		}
 	}
 	return ActualDelta != 0;
+}
+
+void UAttributeComponent::MulticastHelathChanged_Implementation(AActor* InstigatorActor, float NewHealth, float Delta)
+{
+	OnHealthChanged.Broadcast(InstigatorActor, this, NewHealth, Delta);
 }
 
 bool UAttributeComponent::IsFullHealth() const
@@ -68,6 +82,23 @@ float UAttributeComponent::GetHealthMax() const
 	return HealthMax;
 }
 
+float UAttributeComponent::GetRage() const
+{
+	return Rage;
+}
+
+bool UAttributeComponent::ApplyRage(AActor* InstigatorActor, float Delta)
+{
+	float OldRage = Rage;
+	Rage = FMath::Clamp(Rage + Delta, 0.0f, RageMax);
+	float ActualDelta = Rage - OldRage;
+	if (ActualDelta != 0)
+	{
+		OnRageChanged.Broadcast(InstigatorActor, this, Rage, ActualDelta);
+	}
+	return ActualDelta != 0;
+}
+
 UAttributeComponent* UAttributeComponent::GetAttributes(AActor* FromActor)
 {
 	if (FromActor)
@@ -76,7 +107,6 @@ UAttributeComponent* UAttributeComponent::GetAttributes(AActor* FromActor)
 	}
 	return nullptr;
 }
-
 bool UAttributeComponent::IsActorAlive(AActor* CurrentActor)
 {
 	UAttributeComponent* AttributeComp = GetAttributes(CurrentActor);
@@ -85,4 +115,11 @@ bool UAttributeComponent::IsActorAlive(AActor* CurrentActor)
 		return AttributeComp->IsAlive();
 	}
 	return false;
+}
+
+void UAttributeComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(UAttributeComponent, Health);
+	DOREPLIFETIME(UAttributeComponent, HealthMax);
 }

@@ -10,7 +10,7 @@ ATargetDummy::ATargetDummy()
  	MeshComp = CreateDefaultSubobject< UStaticMeshComponent>("MeshComp");
 	RootComponent = MeshComp;
 	AttributeComp = CreateDefaultSubobject<UAttributeComponent>("AttributeComp");
-	AttributeComp->OnUpdateHealth.AddDynamic(this, &ATargetDummy::OnHealthChanged);
+	AttributeComp->OnHealthChanged.AddDynamic(this, &ATargetDummy::OnHealthChanged);
 
 }
 

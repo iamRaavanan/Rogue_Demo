@@ -12,6 +12,8 @@ APowerupActor::APowerupActor()
 	RootComponent = SphereComp;
 
 	RespawnTime = 10.0f;
+
+	SetReplicates(true);
 }
 
 void APowerupActor::ShowPowerup()

@@ -7,6 +7,8 @@
 #include "GameplayTagContainer.h"
 #include "MagicProjectile.generated.h"
 
+class UActionEffect;
+
 UCLASS()
 class ROGUE_REPO_API AMagicProjectile : public AProjectileBase
 {
@@ -23,6 +25,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Damage")
 	FGameplayTag ParryTag;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Damage")
+	TSubclassOf<UActionEffect> BurningActionClass;
 
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

@@ -93,7 +93,7 @@ void ARogueCharacter::OnHealthChanged(AActor* InstigatorActor, UAttributeCompone
 void ARogueCharacter::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
-	AttributeComp->OnUpdateHealth.AddDynamic(this, &ARogueCharacter::OnHealthChanged);
+	AttributeComp->OnHealthChanged.AddDynamic(this, &ARogueCharacter::OnHealthChanged);
 }
 
 FVector ARogueCharacter::GetPawnViewLocation() const

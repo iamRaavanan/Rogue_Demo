@@ -33,10 +33,16 @@ protected:
 	UFUNCTION()
 	void SetTargetActor (AActor* NewTarget);
 
+	UFUNCTION(BlueprintCallable, Category = "AI")
+	AActor* GetTargetActor() const;
+
 protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UUserWidget> HealthBarWidgetClass;
+
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UUserWidget> SpottedWidgetClass;
 
 	UPROPERTY(VisibleAnywhere, Category = "Components")
 	UPawnSensingComponent* PawnSensingComp;
@@ -49,4 +55,7 @@ protected:
 
 	UPROPERTY()
 	UWorldUserWidget* ActiveHealthBar;
+
+	UPROPERTY(VisibleAnywhere, Category = "Effects")
+	FName TargetActorKey;
 };

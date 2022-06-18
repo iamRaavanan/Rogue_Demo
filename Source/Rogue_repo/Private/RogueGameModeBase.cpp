@@ -8,12 +8,19 @@
 #include "AttributeComponent.h"
 #include "EngineUtils.h"
 #include "RogueCharacter.h"
+#include "RogueState.h"
 
 static TAutoConsoleVariable<bool> CVarSpawnBots(TEXT("rr.SpawnBots"), true, TEXT("EnableSpawning of bots via timer"), ECVF_Cheat);
 
 ARogueGameModeBase::ARogueGameModeBase()
 {
 	SpawnTimerInterval = 2.0f;	
+	CreditsPerKill = 20;
+
+	DesiredPowerupCount = 10;
+	RequiredPowerupDistance = 2000;
+
+	PlayerStateClass = ARogueState::StaticClass();
 }
 
 void ARogueGameModeBase::SpawnBotTimerElapsed()
@@ -77,6 +84,46 @@ void ARogueGameModeBase::RespawnPlayerElapsed(AController* Controller)
 	}
 }
 
+void ARogueGameModeBase::OnPowerupSpawnQueryCompleted(UEnvQueryInstanceBlueprintWrapper* QueryInstance, EEnvQueryStatus::Type QueryStatus)
+{
+	if (QueryStatus != EEnvQueryStatus::Success)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("EQS query failed"));
+		return;
+	}
+	TArray<FVector> Locations = QueryInstance->GetResultsAsLocations();
+	
+	TArray<FVector> UsedLocations;
+	int32 SpawnCounter = 0;
+	while (SpawnCounter < DesiredPowerupCount && Locations.Num() > 0)
+	{
+		int32 RandLocationIndex = FMath::RandRange(0, Locations.Num() - 1);
+		FVector PickedLocation = Locations[RandLocationIndex];
+		Locations.Remove(PickedLocation);
+		bool bIsValidLocation = true;
+		for (FVector OtherLocation : UsedLocations)
+		{
+			float DistanceTo = (PickedLocation - OtherLocation).Size();
+			if (DistanceTo < RequiredPowerupDistance)
+			{
+				// Choosen location is too close, skip and look for better location
+				bIsValidLocation = false;
+				break;
+			}
+		}
+		if(!bIsValidLocation)
+			continue;
+
+		int32 RandomClassIndex = FMath::RandRange(0, PowerupClasses.Num() - 1);
+		TSubclassOf<AActor> RandomPowerupClass = PowerupClasses[RandomClassIndex];
+		GetWorld()->SpawnActor<AActor>(RandomPowerupClass, PickedLocation,FRotator::ZeroRotator);
+
+		UsedLocations.Add(PickedLocation);
+		SpawnCounter++;
+	}
+
+}
+
 void ARogueGameModeBase::OnActorKilled(AActor* Victim, AActor* Killer)
 {
 	ARogueCharacter* Player = Cast<ARogueCharacter>(Victim);
@@ -90,13 +137,32 @@ void ARogueGameModeBase::OnActorKilled(AActor* Victim, AActor* Killer)
 		float RespawnDelay = 2.0f;
 		GetWorldTimerManager().SetTimer(TimerHanlde_RespawnDelay, RespawnDelegate,RespawnDelay, false);
 	}
+
+	// Credits to player
+	APawn* KillerPawn = Cast<APawn>(Killer);
+	if (KillerPawn)
+	{
+		if (ARogueState* RS = KillerPawn->GetPlayerState<ARogueState>())
+		{
+			RS->AddCredits(CreditsPerKill);
+		}
+	}
 }
 
 void ARogueGameModeBase::StartPlay()
 {
 	Super::StartPlay();
 
-	GetWorldTimerManager().SetTimer(TimerHanlde_SpawnBots, this, &ARogueGameModeBase::SpawnBotTimerElapsed, SpawnTimerInterval, true);
+	//GetWorldTimerManager().SetTimer(TimerHanlde_SpawnBots, this, &ARogueGameModeBase::SpawnBotTimerElapsed, SpawnTimerInterval, true);
+
+	if (ensure(PowerupClasses.Num() > 0))
+	{
+		UEnvQueryInstanceBlueprintWrapper* QueryInstance = UEnvQueryManager::RunEQSQuery(this, PowerupSpawnQuery, this, EEnvQueryRunMode::AllMatching, nullptr);
+		if (ensure(QueryInstance))
+		{
+			QueryInstance->GetOnQueryFinishedEvent().AddDynamic(this, &ARogueGameModeBase::OnPowerupSpawnQueryCompleted);
+		}
+	}
 }
 
 void ARogueGameModeBase::KillAll()
