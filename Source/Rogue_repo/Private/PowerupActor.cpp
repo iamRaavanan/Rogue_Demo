@@ -2,6 +2,7 @@
 
 
 #include "PowerupActor.h"
+#include "Net/UnrealNetwork.h"
 #include "Components/SphereComponent.h"
 
 // Sets default values
@@ -27,10 +28,10 @@ void APowerupActor::HideAndCooldownPowerup()
 	GetWorldTimerManager().SetTimer(TimerHanlde_RespawnTimer, this, &APowerupActor::ShowPowerup, RespawnTime);
 }
 
-void APowerupActor::SetPowerupState(bool bIsActive)
+void APowerupActor::SetPowerupState(bool bIsNewActive)
 {
-	SetActorEnableCollision(bIsActive);
-	RootComponent->SetVisibility(bIsActive, true);
+	bIsActive = bIsNewActive;
+	OnRep_IsActive();
 }
 
 void APowerupActor::Interact_Implementation(APawn* InstigatorPawn)
@@ -38,4 +39,14 @@ void APowerupActor::Interact_Implementation(APawn* InstigatorPawn)
 	// Logic is in dervied class.
 }
 
+void APowerupActor::OnRep_IsActive()
+{
+	SetActorEnableCollision(bIsActive);
+	RootComponent->SetVisibility(bIsActive, true);
+}
 
+void APowerupActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(APowerupActor, bIsActive);
+}

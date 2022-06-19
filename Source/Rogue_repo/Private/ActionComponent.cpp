@@ -3,6 +3,9 @@
 
 #include "ActionComponent.h"
 #include "Action.h"
+#include "../Rogue_repo.h"
+#include "Net/UnrealNetwork.h"
+#include "Engine/ActorChannel.h"
 
 // Sets default values for this component's properties
 UActionComponent::UActionComponent()
@@ -15,17 +18,30 @@ void UActionComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	for (TSubclassOf<UAction> ActionClass : DefaultActions)
+	if (GetOwner()->HasAuthority())
 	{
-		AddAction(GetOwner(), ActionClass);
-	}
+		for (TSubclassOf<UAction> ActionClass : DefaultActions)
+		{
+			AddAction(GetOwner(), ActionClass);
+		}
+	}	
 }
 
 void UActionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-	FString DebugMsg = GetNameSafe(GetOwner()) + " : " + ActiveGameplayTags.ToStringSimple();
-	GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::White, DebugMsg);
+	//FString DebugMsg = GetNameSafe(GetOwner()) + " : " + ActiveGameplayTags.ToStringSimple();
+	//GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::White, DebugMsg);
+	for (UAction* Action : Actions)
+	{
+		FColor TextColor = Action->IsRunning() ? FColor::Blue : FColor::White;
+		FString ActionMsg = FString::Printf(TEXT("[%s] Action: %s : IsRunning:%s : Outer : %s"),
+			*GetNameSafe(GetOwner()),
+			*Action->ActionName.ToString(),
+			Action->IsRunning() ? TEXT("True") : TEXT("False"),
+			*GetNameSafe(Action->GetOuter()));
+		LogOnScreen(this, ActionMsg, TextColor, 0.f);
+	}
 }
 
 void UActionComponent::AddAction(AActor* Instigator, TSubclassOf<UAction> ActionClass)
@@ -34,15 +50,28 @@ void UActionComponent::AddAction(AActor* Instigator, TSubclassOf<UAction> Action
 	{
 		return;
 	}
-	UAction* NewAction = NewObject<UAction>(this, ActionClass);
+	UAction* NewAction = NewObject<UAction>(GetOwner(), ActionClass);
 	if (ensure(NewAction))
 	{
+		NewAction->Initialize(this);
 		Actions.Add(NewAction);
 		if (NewAction->bAutoStart && ensure(NewAction->CanStart(Instigator)))
 		{
 			NewAction->StartAction(Instigator);
 		}
 	}
+}
+
+UAction* UActionComponent::GetAction(TSubclassOf<UAction> ActionClass) const
+{
+	for (UAction* Action : Actions)
+	{
+		if (Action && Action->IsA(ActionClass))
+		{
+			return Action;
+		}
+	}
+	return nullptr;
 }
 
 void UActionComponent::RemoveAction(UAction* ActionToRemove)
@@ -93,7 +122,26 @@ bool UActionComponent::StopActionByName(AActor* Instigator, FName ActionName)
 	return false;
 }
 
+bool UActionComponent::ReplicateSubobjects(class UActorChannel* Channel, class FOutBunch* Bunch, FReplicationFlags* RepFlags)
+{
+	bool WroteSomething = Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
+	for (UAction* Action : Actions)
+	{
+		if (Action)
+		{
+			WroteSomething |= Channel->ReplicateSubobject(Action, *Bunch, *RepFlags);
+		}
+	}
+	return WroteSomething;
+}
+
 void UActionComponent::ServerStartAction_Implementation(AActor* Instigator, FName ActionName)
 {
 	StartActionByName(Instigator, ActionName);
+}
+
+void UActionComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(UActionComponent, Actions);
 }

@@ -23,6 +23,8 @@ AAICharacter::AAICharacter()
 	// @Fixme Need to create a new profile for projectile to remove below lines
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Ignore);
 	GetMesh()->SetGenerateOverlapEvents(true);
+
+	TargetActorKey = "TargetActor";
 }
 
 void AAICharacter::PostInitializeComponents()
@@ -57,14 +59,19 @@ void AAICharacter::OnPawnSeen(APawn* Pawn)
 	if (GetTargetActor() != Pawn)
 	{
 		SetTargetActor(Pawn);
-		UWorldUserWidget* NewWidget = CreateWidget<UWorldUserWidget>(GetWorld(), SpottedWidgetClass);
-		if (NewWidget)
-		{
-			NewWidget->AttachedActor = this;
-			NewWidget->AddToViewport(10);
-		}
+		MulticastPawnSeen();
 	}
 	//DrawDebugString(GetWorld(), GetActorLocation(), "PLAYER SPOTTED", nullptr, FColor::White, 4.0f, true);
+}
+
+void AAICharacter::MulticastPawnSeen_Implementation()
+{
+	UWorldUserWidget* NewWidget = CreateWidget<UWorldUserWidget>(GetWorld(), SpottedWidgetClass);
+	if (NewWidget)
+	{
+		NewWidget->AttachedActor = this;
+		NewWidget->AddToViewport(10);
+	}
 }
 
 void AAICharacter::OnHealthChanged(AActor* InstigatorActor, UAttributeComponent* OwingComp, float NewHealth, float Delta)

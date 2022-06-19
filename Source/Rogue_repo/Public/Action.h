@@ -22,6 +22,8 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Action")
 	bool bAutoStart;
 public:
+	
+	void Initialize(UActionComponent* NewActionComp);
 
 	UFUNCTION(BlueprintCallable, Category = "Action")
 	bool IsRunning () const;
@@ -37,17 +39,31 @@ public:
 
 	UWorld* GetWorld () const override;
 
+	bool IsSupportedForNetworking() const override
+	{
+		return true;
+	}
+
+	UPROPERTY(ReplicatedUsing = "OnRep_IsRunning")
+	bool bIsRunning;
+
 protected:
+
+	UPROPERTY(Replicated)
+	UActionComponent* ActionComp;
+
 	UPROPERTY(EditDefaultsOnly, Category = "Tags")
 	FGameplayTagContainer GrantTags;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Tags")
 	FGameplayTagContainer BlockedTags;
-
-	bool bIsRunning;
+		
 
 protected:
 
 	UFUNCTION(BlueprintCallable, Category ="Action")
 	UActionComponent* GetOwningComponent () const;
+
+	UFUNCTION()
+	void OnRep_IsRunning();
 };

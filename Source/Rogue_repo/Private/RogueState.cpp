@@ -2,6 +2,7 @@
 
 
 #include "RogueState.h"
+#include "Net/UnrealNetwork.h"
 
 
 void ARogueState::AddCredits(int32 Delta)
@@ -29,7 +30,19 @@ bool ARogueState::RemoveCredits(int32 Delta)
 	return true;
 }
 
+void ARogueState::OnRep_Credits(int32 OldCredits)
+{
+	OnCreditChanged.Broadcast(this, Credits, Credits- OldCredits);
+}
+
 int32 ARogueState::GetCredits() const
 {
 	return Credits;
+}
+
+void ARogueState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ARogueState, Credits);
 }

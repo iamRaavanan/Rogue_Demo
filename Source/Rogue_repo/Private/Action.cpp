@@ -3,6 +3,13 @@
 
 #include "Action.h"
 #include "ActionComponent.h"
+#include "../Rogue_repo.h"
+#include "Net/UnrealNetwork.h"
+
+void UAction::Initialize(UActionComponent* NewActionComp)
+{
+	ActionComp = NewActionComp;
+}
 
 bool UAction::CanStart_Implementation(AActor* Instigator)
 {
@@ -18,7 +25,8 @@ bool UAction::CanStart_Implementation(AActor* Instigator)
 
 void UAction::StartAction_Implementation(AActor* Instigator)
 {
-	UE_LOG(LogTemp, Log, TEXT("Running : %s"), *GetNameSafe(this));
+	//UE_LOG(LogTemp, Log, TEXT("Running : %s"), *GetNameSafe(this));
+	LogOnScreen(this, FString::Printf(TEXT("Started: %s"), *ActionName.ToString()), FColor::Green);
 	
 	UActionComponent* Comp = GetOwningComponent();
 	Comp->ActiveGameplayTags.AppendTags(GrantTags);
@@ -28,9 +36,10 @@ void UAction::StartAction_Implementation(AActor* Instigator)
 
 void UAction::StopAction_Implementation(AActor* Instigator)
 {
-	UE_LOG(LogTemp, Log, TEXT("Stopped : %s"), *GetNameSafe(this));
+	//UE_LOG(LogTemp, Log, TEXT("Stopped : %s"), *GetNameSafe(this));
+	LogOnScreen(this, FString::Printf(TEXT("Stopped: %s"), *ActionName.ToString()), FColor::White);
 
-	ensureAlways(bIsRunning);
+	//ensureAlways(bIsRunning);
 
 	UActionComponent* Comp = GetOwningComponent();
 	Comp->ActiveGameplayTags.RemoveTags(GrantTags);
@@ -47,15 +56,45 @@ bool UAction::IsRunning() const
 UWorld* UAction::GetWorld() const
 {
 	// Outer is set when creating an action via NewObject<T>
-	UActorComponent* Comp = Cast<UActorComponent>(GetOuter());
+	/*UActorComponent* Comp = Cast<UActorComponent>(GetOuter());
 	if (Comp)
 	{
 		return Comp->GetWorld();
+	}*/
+	AActor* Actor = Cast<AActor>(GetOuter());
+	if (Actor)
+	{
+		return Actor->GetWorld();
 	}
 	return nullptr;
 }
 
 UActionComponent* UAction::GetOwningComponent() const
 {
-	return Cast<UActionComponent>(GetOuter());
+	// 1st option - Not optimal
+	// As, the GetComponentByClass iterate over all the component on each call
+	//AActor* Actor = Cast<AActor>(GetOuter());
+	//return Actor->GetComponentByClass(UActionComponent::StaticClass());
+
+	//return Cast<UActionComponent>(GetOuter());
+	return ActionComp;
+}
+
+void UAction::OnRep_IsRunning()
+{
+	if (bIsRunning)
+	{
+		StartAction(nullptr);
+	}
+	else
+	{
+		StopAction(nullptr);
+	}
+}
+
+void UAction::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(UAction, bIsRunning);
+	DOREPLIFETIME(UAction, ActionComp);
 }

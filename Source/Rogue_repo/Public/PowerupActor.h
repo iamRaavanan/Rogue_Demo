@@ -20,7 +20,9 @@ public:
 
 
 protected:
-	
+	UPROPERTY(ReplicatedUsing="OnRep_IsActive")
+	bool bIsActive;
+
 	UPROPERTY(EditAnywhere, Category = "Powerup")
 	float RespawnTime;
 
@@ -32,13 +34,16 @@ protected:
 protected:
 	
 	UFUNCTION()
+	void OnRep_IsActive();
+
+	UFUNCTION()
 	void ShowPowerup ();
 
 	UFUNCTION()
 	void HideAndCooldownPowerup();
 
 	UFUNCTION()
-	void SetPowerupState(bool bIsActive);
+	void SetPowerupState(bool bIsNewActive);
 public:
 	void Interact_Implementation(APawn* InstigatorPawn) override;
 
