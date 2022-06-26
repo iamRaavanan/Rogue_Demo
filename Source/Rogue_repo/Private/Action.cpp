@@ -31,7 +31,8 @@ void UAction::StartAction_Implementation(AActor* Instigator)
 	UActionComponent* Comp = GetOwningComponent();
 	Comp->ActiveGameplayTags.AppendTags(GrantTags);
 
-	bIsRunning = true;
+	RepData.bIsRunning = true;
+	RepData.Instigator = Instigator;
 }
 
 void UAction::StopAction_Implementation(AActor* Instigator)
@@ -44,12 +45,13 @@ void UAction::StopAction_Implementation(AActor* Instigator)
 	UActionComponent* Comp = GetOwningComponent();
 	Comp->ActiveGameplayTags.RemoveTags(GrantTags);
 
-	bIsRunning = false;
+	RepData.bIsRunning = false;
+	RepData.Instigator = Instigator;
 }
 
 bool UAction::IsRunning() const
 {
-	return bIsRunning;
+	return RepData.bIsRunning;
 }
 
 
@@ -80,21 +82,21 @@ UActionComponent* UAction::GetOwningComponent() const
 	return ActionComp;
 }
 
-void UAction::OnRep_IsRunning()
+void UAction::OnRep_RepData()
 {
-	if (bIsRunning)
+	if (RepData.bIsRunning)
 	{
-		StartAction(nullptr);
+		StartAction(RepData.Instigator);
 	}
 	else
 	{
-		StopAction(nullptr);
+		StopAction(RepData.Instigator);
 	}
 }
 
 void UAction::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME(UAction, bIsRunning);
+	DOREPLIFETIME(UAction, RepData);
 	DOREPLIFETIME(UAction, ActionComp);
 }

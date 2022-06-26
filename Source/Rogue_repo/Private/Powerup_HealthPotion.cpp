@@ -7,9 +7,6 @@
 
 APowerup_HealthPotion::APowerup_HealthPotion()
 {
-	MeshComp = CreateDefaultSubobject<UStaticMeshComponent>("MeshComp");
-	MeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	MeshComp->SetupAttachment(RootComponent);
 	CreditCost = 50;
 }
 

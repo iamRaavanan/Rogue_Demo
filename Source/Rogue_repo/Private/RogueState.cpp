@@ -3,6 +3,7 @@
 
 #include "RogueState.h"
 #include "Net/UnrealNetwork.h"
+#include "RogueSaveGame.h"
 
 
 void ARogueState::AddCredits(int32 Delta)
@@ -28,6 +29,22 @@ bool ARogueState::RemoveCredits(int32 Delta)
 	Credits -= Delta;
 	OnCreditChanged.Broadcast(this, Credits, Delta);
 	return true;
+}
+
+void ARogueState::SavePlayerState_Implementation(URogueSaveGame* SaveObj)
+{
+	if (SaveObj)
+	{
+		SaveObj->Credits = Credits;
+	}
+}
+
+void ARogueState::LoadPlayerState_Implementation(URogueSaveGame* SaveObj)
+{
+	if (SaveObj)
+	{
+		Credits = SaveObj->Credits;
+	}
 }
 
 void ARogueState::OnRep_Credits(int32 OldCredits)

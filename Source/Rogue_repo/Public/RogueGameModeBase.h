@@ -10,6 +10,7 @@
 class UEnvQuery;
 class UEnvQueryInstanceBlueprintWrapper;
 class UCurveFloat;
+class URogueSaveGame;
 /**
  * 
  */
@@ -19,6 +20,12 @@ class ROGUE_REPO_API ARogueGameModeBase : public AGameModeBase
 	GENERATED_BODY()
 	
 protected:
+
+	FString SlotName;
+
+	UPROPERTY()
+	URogueSaveGame* CurrentSaveGame;
+
 	FTimerHandle TimerHanlde_SpawnBots;
 
 	UPROPERTY(EditDefaultsOnly, Category = "AI")
@@ -67,8 +74,18 @@ public:
 
 	virtual void OnActorKilled (AActor* Victim, AActor* Killer);
 
+	virtual void InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage) override;
+
 	virtual void StartPlay() override;
+
+	void HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer) override;
 
 	UFUNCTION(Exec)
 	void KillAll ();
+
+	UFUNCTION(BlueprintCallable)
+	void WriteSaveGame ();
+
+	UFUNCTION()
+	void LoadSaveGame ();
 };

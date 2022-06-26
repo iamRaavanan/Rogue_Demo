@@ -87,6 +87,7 @@ void ARogueCharacter::OnHealthChanged(AActor* InstigatorActor, UAttributeCompone
 	{
 		APlayerController* PC = Cast<APlayerController>(GetController());
 		DisableInput(PC);
+		SetLifeSpan(5.0f);
 	}
 }
 

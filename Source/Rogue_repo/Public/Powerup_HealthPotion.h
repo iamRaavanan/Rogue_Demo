@@ -17,9 +17,6 @@ class ROGUE_REPO_API APowerup_HealthPotion : public APowerupActor
 
 protected:
 
-	UPROPERTY(VisibleAnywhere, Category = "Components")
-	UStaticMeshComponent* MeshComp;
-	
 	UPROPERTY(EditAnywhere, Category = "HealthPotion")
 	int32 CreditCost;
 

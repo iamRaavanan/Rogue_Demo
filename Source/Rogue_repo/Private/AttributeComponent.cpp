@@ -42,23 +42,25 @@ bool UAttributeComponent::ApplyHealthValue(AActor* InstigatorActor, float Delta)
 		Delta *= damageMultiplier;
 	}
 	float oldHealth = Health;
-	Health = FMath::Clamp(Health + Delta, 0.0f, HealthMax);
-
-	float ActualDelta = Health - oldHealth;
-	//OnHealthChanged.Broadcast(InstigatorActor, this, Health, ActualDelta);
-	if (ActualDelta != 0)
+	float NewHealth = FMath::Clamp(Health + Delta, 0.0f, HealthMax);
+	float ActualDelta = NewHealth - oldHealth;
+	if (GetOwner()->HasAuthority())
 	{
-		MulticastHelathChanged(InstigatorActor, Health, ActualDelta);
-	}
-	//Died
-	if (ActualDelta < 0.0f && Health == 0.0f)
-	{
-		ARogueGameModeBase* RGM = GetWorld()->GetAuthGameMode<ARogueGameModeBase>();
-		if (RGM)
+		Health = NewHealth;
+		if (ActualDelta != 0)
 		{
-			RGM->OnActorKilled(GetOwner(), InstigatorActor);
+			MulticastHelathChanged(InstigatorActor, Health, ActualDelta);
+		}
+		if (ActualDelta < 0.0f && Health == 0.0f)
+		{
+			ARogueGameModeBase* RGM = GetWorld()->GetAuthGameMode<ARogueGameModeBase>();
+			if (RGM)
+			{
+				RGM->OnActorKilled(GetOwner(), InstigatorActor);
+			}
 		}
 	}
+	//Died
 	return ActualDelta != 0;
 }
 

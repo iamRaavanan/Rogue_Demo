@@ -46,6 +46,11 @@ void AItemChest::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifeti
 	DOREPLIFETIME(AItemChest, bLidOpened);
 }
 
+void AItemChest::OnActorLoaded_Implementation()
+{
+	OnRep_LidOpened();
+}
+
 void AItemChest::OnRep_LidOpened()
 {
 	float CurrentPitch = bLidOpened ? TargetPitch : 0.f;

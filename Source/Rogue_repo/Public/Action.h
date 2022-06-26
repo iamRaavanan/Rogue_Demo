@@ -9,6 +9,18 @@
 
 class UWorld;
 
+USTRUCT()
+struct FActionRepData
+{
+	GENERATED_BODY()
+public:
+	UPROPERTY()
+	bool bIsRunning;
+
+	UPROPERTY()
+	AActor* Instigator;
+};
+
 UCLASS(Blueprintable )
 class ROGUE_REPO_API UAction : public UObject
 {
@@ -44,8 +56,8 @@ public:
 		return true;
 	}
 
-	UPROPERTY(ReplicatedUsing = "OnRep_IsRunning")
-	bool bIsRunning;
+	UPROPERTY(ReplicatedUsing = "OnRep_RepData")
+	FActionRepData RepData;
 
 protected:
 
@@ -65,5 +77,5 @@ protected:
 	UActionComponent* GetOwningComponent () const;
 
 	UFUNCTION()
-	void OnRep_IsRunning();
+	void OnRep_RepData();
 };

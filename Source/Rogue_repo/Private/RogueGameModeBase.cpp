@@ -9,6 +9,12 @@
 #include "EngineUtils.h"
 #include "RogueCharacter.h"
 #include "RogueState.h"
+#include "GameFramework/SaveGame.h"
+#include "RogueSaveGame.h"
+#include "Kismet/GameplayStatics.h"
+#include "GameFramework/GameStateBase.h"
+#include "GameplayInterface.h"
+#include "Serialization/ObjectAndNameAsStringProxyArchive.h"
 
 static TAutoConsoleVariable<bool> CVarSpawnBots(TEXT("rr.SpawnBots"), true, TEXT("EnableSpawning of bots via timer"), ECVF_Cheat);
 
@@ -21,6 +27,7 @@ ARogueGameModeBase::ARogueGameModeBase()
 	RequiredPowerupDistance = 2000;
 
 	PlayerStateClass = ARogueState::StaticClass();
+	SlotName = "RogueSaveGame01";
 }
 
 void ARogueGameModeBase::SpawnBotTimerElapsed()
@@ -149,6 +156,12 @@ void ARogueGameModeBase::OnActorKilled(AActor* Victim, AActor* Killer)
 	}
 }
 
+void ARogueGameModeBase::InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage)
+{
+	Super::InitGame(MapName, Options, ErrorMessage);
+	LoadSaveGame();
+}
+
 void ARogueGameModeBase::StartPlay()
 {
 	Super::StartPlay();
@@ -165,6 +178,16 @@ void ARogueGameModeBase::StartPlay()
 	}
 }
 
+void ARogueGameModeBase::HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer)
+{
+	Super::HandleStartingNewPlayer_Implementation(NewPlayer);
+	ARogueState* RogueState = Cast<ARogueState>(NewPlayer->GetPlayerState<ARogueState>());
+	if (RogueState)
+	{
+		RogueState->LoadPlayerState(CurrentSaveGame);
+	}
+}
+
 void ARogueGameModeBase::KillAll()
 {
 	for (TActorIterator<AAICharacter> It(GetWorld()); It; ++It)
@@ -175,5 +198,81 @@ void ARogueGameModeBase::KillAll()
 		{
 			AttributeComp->Kill(this);	// @fixme: pass in player for kill credits
 		}
+	}
+}
+
+void ARogueGameModeBase::WriteSaveGame()
+{
+	for (int i = 0; i < GameState->PlayerArray.Num(); i++)
+	{
+		ARogueState* RogueState = Cast<ARogueState>(GameState->PlayerArray[i]);
+		if (RogueState)
+		{
+			RogueState->SavePlayerState(CurrentSaveGame);
+			break; //Single player option
+		}
+	}
+	CurrentSaveGame->SavedActors.Empty();
+	for (FActorIterator It(GetWorld()); It; ++It)
+	{
+		AActor* Actor = *It;
+		if (!Actor->Implements<UGameplayInterface>())
+		{
+			continue;
+		}
+		FActorSaveData ActorData;
+		ActorData.ActorName = Actor->GetName();
+		ActorData.Transform = Actor->GetTransform();
+
+		FMemoryWriter memWriter(ActorData.ByteData);
+		FObjectAndNameAsStringProxyArchive Arch(memWriter, true);
+		Arch.ArIsSaveGame = true;
+		Actor->Serialize(Arch);
+
+		CurrentSaveGame->SavedActors.Add(ActorData);
+	}
+
+	UGameplayStatics::SaveGameToSlot(CurrentSaveGame, SlotName, 0);
+}
+
+void ARogueGameModeBase::LoadSaveGame()
+{
+	if (UGameplayStatics::DoesSaveGameExist(SlotName, 0))
+	{
+		CurrentSaveGame = Cast<URogueSaveGame>(UGameplayStatics::LoadGameFromSlot(SlotName, 0));
+		if (CurrentSaveGame == nullptr)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Failed to load SavedGame from [%s] slot"), *SlotName);
+			return;
+		}
+		UE_LOG(LogTemp, Warning, TEXT("Successfully loaded from [%s] slot"), *SlotName);
+		for (FActorIterator It(GetWorld()); It; ++It)
+		{
+			AActor* Actor = *It;
+			if (!Actor->Implements<UGameplayInterface>())
+			{
+				continue;
+			}
+			for (FActorSaveData ActorData : CurrentSaveGame->SavedActors)
+			{
+				if (ActorData.ActorName == Actor->GetName())
+				{
+					Actor->SetActorTransform(ActorData.Transform);
+
+					FMemoryReader memReader(ActorData.ByteData);
+					FObjectAndNameAsStringProxyArchive Arch(memReader, true);
+					Arch.ArIsSaveGame = true;
+					Actor->Serialize(Arch);
+					
+					//IGameplayInterface::Execute_OnActorLoaded(Actor);
+					break;
+				}
+			}
+		}
+	}
+	else
+	{
+		CurrentSaveGame = Cast<URogueSaveGame>(UGameplayStatics::CreateSaveGameObject(URogueSaveGame::StaticClass()));
+		UE_LOG(LogTemp, Warning, TEXT("Created the SavedGame"));
 	}
 }

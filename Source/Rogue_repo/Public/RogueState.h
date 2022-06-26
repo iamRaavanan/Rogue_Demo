@@ -6,6 +6,7 @@
 #include "GameFramework/PlayerState.h"
 #include "RogueState.generated.h"
 
+class URogueSaveGame;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnCreditChanged, ARogueState*, RogueState, int32, NewCredits, int32, Delta);
 
 UCLASS()
@@ -34,4 +35,10 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "Events")
 	FOnCreditChanged OnCreditChanged;
+
+	UFUNCTION(BlueprintNativeEvent)
+	void SavePlayerState(URogueSaveGame* SaveObj);
+
+	UFUNCTION(BlueprintNativeEvent)
+	void LoadPlayerState(URogueSaveGame* SaveObj);
 };

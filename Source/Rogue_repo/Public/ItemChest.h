@@ -40,6 +40,8 @@ public:
 
 	void Interact_Implementation(APawn* InstigatorPawn);
 
+	void OnActorLoaded_Implementation();
+
 	UFUNCTION()
 	void OnRep_LidOpened();
 };
