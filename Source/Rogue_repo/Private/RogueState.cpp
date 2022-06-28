@@ -43,7 +43,8 @@ void ARogueState::LoadPlayerState_Implementation(URogueSaveGame* SaveObj)
 {
 	if (SaveObj)
 	{
-		Credits = SaveObj->Credits;
+		//Credits = SaveObj->Credits;
+		AddCredits(SaveObj->Credits);
 	}
 }
 

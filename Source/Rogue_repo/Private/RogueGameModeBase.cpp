@@ -180,12 +180,12 @@ void ARogueGameModeBase::StartPlay()
 
 void ARogueGameModeBase::HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer)
 {
-	Super::HandleStartingNewPlayer_Implementation(NewPlayer);
 	ARogueState* RogueState = Cast<ARogueState>(NewPlayer->GetPlayerState<ARogueState>());
 	if (RogueState)
 	{
 		RogueState->LoadPlayerState(CurrentSaveGame);
 	}
+	Super::HandleStartingNewPlayer_Implementation(NewPlayer);
 }
 
 void ARogueGameModeBase::KillAll()
