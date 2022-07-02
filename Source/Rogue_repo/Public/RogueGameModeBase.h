@@ -5,15 +5,49 @@
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
 #include "EnvironmentQuery/EnvQueryTypes.h"
+#include "Engine/DataTable.h"
 #include "RogueGameModeBase.generated.h"
 
 class UEnvQuery;
 class UEnvQueryInstanceBlueprintWrapper;
 class UCurveFloat;
 class URogueSaveGame;
-/**
- * 
- */
+class UDataTable;
+class UMonsterData;
+
+USTRUCT(BlueprintType)
+struct FMonsterInfoRow : public FTableRowBase 
+{
+	GENERATED_BODY()
+
+public:
+	
+	FMonsterInfoRow()
+	{
+		Weight = 1.0f;
+		SpawnCost = 5.0f;
+		KillReward = 20.0f;
+	}
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	FPrimaryAssetId MonsterId;
+	/*UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UMonsterData* MonsterData;*/
+	//TSubclassOf<AActor> MonsterClass;
+
+	// Relative chance to pick particular monster
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	float Weight;
+
+	// Points required for game mode to spawn this unit
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	float SpawnCost;
+
+	// Amount of credits awarded when user kill this monster
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	float KillReward;
+};
+
 UCLASS()
 class ROGUE_REPO_API ARogueGameModeBase : public AGameModeBase
 {
@@ -29,7 +63,10 @@ protected:
 	FTimerHandle TimerHanlde_SpawnBots;
 
 	UPROPERTY(EditDefaultsOnly, Category = "AI")
-	TSubclassOf<AActor> MinionClass;
+	UDataTable* MonsterTable;
+
+	/*UPROPERTY(EditDefaultsOnly, Category = "AI")
+	TSubclassOf<AActor> MinionClass;*/
 
 	UPROPERTY(EditDefaultsOnly, Category = "AI")
 	UEnvQuery* SpawnBotQuery;
@@ -62,6 +99,9 @@ protected:
 
 	UFUNCTION()
 	void OnQueryCompleted (UEnvQueryInstanceBlueprintWrapper* QueryInstance, EEnvQueryStatus::Type QueryStatus);
+
+	UFUNCTION()
+	void OnMosterLoaded (FPrimaryAssetId LoadedId, FVector LoadLocation);
 
 	UFUNCTION()
 	void RespawnPlayerElapsed(AController* Controller);

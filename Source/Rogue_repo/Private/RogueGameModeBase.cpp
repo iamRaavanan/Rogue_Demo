@@ -15,6 +15,11 @@
 #include "GameFramework/GameStateBase.h"
 #include "GameplayInterface.h"
 #include "Serialization/ObjectAndNameAsStringProxyArchive.h"
+#include "Engine/DataTable.h"
+#include "MonsterData.h"
+#include "../Rogue_repo.h"
+#include "ActionComponent.h"
+#include "Engine/AssetManager.h"
 
 static TAutoConsoleVariable<bool> CVarSpawnBots(TEXT("rr.SpawnBots"), true, TEXT("EnableSpawning of bots via timer"), ECVF_Cheat);
 
@@ -77,9 +82,51 @@ void ARogueGameModeBase::OnQueryCompleted(UEnvQueryInstanceBlueprintWrapper* Que
 	TArray<FVector> Locations = QueryInstance->GetResultsAsLocations();
 	if (Locations.Num() > 0)	// Locations.IsValidIndex(0)
 	{
-		GetWorld()->SpawnActor<AActor>(MinionClass, Locations[0], FRotator::ZeroRotator);
-		DrawDebugSphere(GetWorld(), Locations[0], 50.0f, 20, FColor::Blue, false, 60.0f);
+		if (MonsterTable)
+		{
+			TArray<FMonsterInfoRow*> Rows;
+			MonsterTable->GetAllRows("", Rows);
+			int32 RandomIndex = FMath::RandRange(0, Rows.Num() - 1);
+			FMonsterInfoRow* SelectedRow = Rows[RandomIndex];
+
+			UAssetManager* Manager = UAssetManager::GetIfValid();
+			if (Manager)
+			{
+				LogOnScreen(this, "Loading monster...", FColor::Green);
+				TArray<FName> Bundles;
+				FStreamableDelegate Delegate = FStreamableDelegate::CreateUObject(this, &ARogueGameModeBase::OnMosterLoaded, SelectedRow->MonsterId, Locations[0]);
+				Manager->LoadPrimaryAsset(SelectedRow->MonsterId, Bundles, Delegate);
+			}
+		}
 	}
+}
+
+void ARogueGameModeBase::OnMosterLoaded(FPrimaryAssetId LoadedId, FVector LoadLocation)
+{
+	LogOnScreen(this, "Monster Loaded.", FColor::Green);
+	UAssetManager* Manager = UAssetManager::GetIfValid();
+	if (Manager)
+	{
+		UMonsterData* MonsterData = Cast<UMonsterData>(Manager->GetPrimaryAssetObject(LoadedId));
+		if (MonsterData)
+		{
+			AActor* NewBot = GetWorld()->SpawnActor<AActor>(MonsterData->MonsterClass, LoadLocation, FRotator::ZeroRotator);
+			if (NewBot)
+			{
+				LogOnScreen(this, FString::Printf(TEXT("Spawned enemy: %s (%s)"), *GetNameSafe(NewBot), *GetNameSafe(MonsterData)));
+
+				UActionComponent* ActionComp = Cast<UActionComponent>(NewBot->GetComponentByClass(UActionComponent::StaticClass()));
+				if (ActionComp)
+				{
+					for (TSubclassOf<UAction> ActionClass : MonsterData->Actions)
+					{
+						ActionComp->AddAction(NewBot, ActionClass);
+					}
+				}
+			}
+		}
+	}
+	DrawDebugSphere(GetWorld(), LoadLocation, 50.0f, 20, FColor::Blue, false, 60.0f);
 }
 
 void ARogueGameModeBase::RespawnPlayerElapsed(AController* Controller)
@@ -166,7 +213,7 @@ void ARogueGameModeBase::StartPlay()
 {
 	Super::StartPlay();
 
-	//GetWorldTimerManager().SetTimer(TimerHanlde_SpawnBots, this, &ARogueGameModeBase::SpawnBotTimerElapsed, SpawnTimerInterval, true);
+	GetWorldTimerManager().SetTimer(TimerHanlde_SpawnBots, this, &ARogueGameModeBase::SpawnBotTimerElapsed, SpawnTimerInterval, true);
 
 	if (ensure(PowerupClasses.Num() > 0))
 	{

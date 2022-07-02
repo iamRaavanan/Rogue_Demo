@@ -37,9 +37,15 @@ void APowerupActor::SetPowerupState(bool bIsNewActive)
 	OnRep_IsActive();
 }
 
+
 void APowerupActor::Interact_Implementation(APawn* InstigatorPawn)
 {
 	// Logic is in dervied class.
+}
+
+FText APowerupActor::GetInteractText_Implementation(APawn* InstigatorPawn)
+{
+	return FText::GetEmpty();
 }
 
 void APowerupActor::OnRep_IsActive()

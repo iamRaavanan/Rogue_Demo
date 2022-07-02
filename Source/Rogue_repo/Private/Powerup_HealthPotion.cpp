@@ -5,9 +5,21 @@
 #include "AttributeComponent.h"
 #include "RogueState.h"
 
+#define LOCTEXT_NAMESPACE "InteractableActors"
+
 APowerup_HealthPotion::APowerup_HealthPotion()
 {
 	CreditCost = 50;
+}
+
+FText APowerup_HealthPotion::GetInteractText_Implementation(APawn* InstigatorPawn)
+{
+	UAttributeComponent* AttributeComp = UAttributeComponent::GetAttributes(InstigatorPawn);
+	if (AttributeComp && AttributeComp->IsFullHealth())
+	{
+		return LOCTEXT("HealthPotion_FullHealthWarning", "Already had full health.");
+	}
+	return FText::Format(LOCTEXT("HealthPotion_InteractMessage", "Cost {0} Credits. Restores maximum health."), CreditCost);
 }
 
 void APowerup_HealthPotion::Interact_Implementation(APawn* InstigatorPawn)
@@ -29,3 +41,4 @@ void APowerup_HealthPotion::Interact_Implementation(APawn* InstigatorPawn)
 		}
 	}
 }
+#undef LOCTEXT_NAMESPACE
